@@ -15,6 +15,8 @@
     { "name": "강남스타일",    "file": "10-gangnam-style.mp3" },
     { "name": "JoJo Wind",    "file": "11-jojos-golden-wind.mp3" },
     { "name": "Bell at Gate", "file": "12-bell-at-the-gate.mp3" },
-    { "name": "Final Stance", "file": "13-final-stance.mp3" }
+    { "name": "Final Stance", "file": "13-final-stance.mp3" },
+    { "name": "Vocals 1",     "file": "14-vocals-1.mp3" },
+    { "name": "Vocals 2",     "file": "15-vocals-2.mp3" }
   ]
 }
