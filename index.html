@@ -1,0 +1,1222 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="LAUNCHPAD">
+<meta name="theme-color" content="#0a0a0a">
+<title>런치패드</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  :root {
+    --bg: #0a0a0a;
+    --device: #141312;
+    --device-border: #1f1d1a;
+    --device-border-soft: #2a2825;
+    --grid-bg: #050505;
+    --text: #f5f3ee;
+    --text-dim: #6f6b62;
+    --text-fade: #3a3733;
+    --accent: #ff6b3d;
+    --row-0-bg: #2a1410;  --row-0-fg: #ee5a40;  --row-0-border: #4a1f18;
+    --row-1-bg: #2a1f0a;  --row-1-fg: #f5a623;  --row-1-border: #4a3208;
+    --row-2-bg: #0f2418;  --row-2-fg: #4ade80;  --row-2-border: #1a3d2a;
+    --row-3-bg: #0a1d2a;  --row-3-fg: #5dade2;  --row-3-border: #142e44;
+    --font-mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+    --font-kr: 'Noto Sans KR', ui-sans-serif, sans-serif;
+  }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-kr);
+    height: 100vh; height: 100dvh;
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    user-select: none;
+    -webkit-user-select: none;
+    overscroll-behavior: none;
+  }
+  body {
+    display: flex;
+    flex-direction: column;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  header {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--device-border);
+    flex-wrap: wrap;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 3px;
+    color: var(--text);
+  }
+  .brand-dot {
+    width: 8px; height: 8px;
+    background: var(--accent);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--accent);
+    animation: pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.55; transform: scale(0.85); }
+  }
+  .tools {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background: var(--device);
+    border: 1px solid var(--device-border);
+    border-radius: 8px;
+  }
+  .group-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    color: var(--text-dim);
+  }
+  .group-value {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    min-width: 26px;
+    text-align: right;
+  }
+  input[type="range"] {
+    -webkit-appearance: none; appearance: none;
+    width: 90px; height: 3px;
+    background: #2a2825;
+    border-radius: 1.5px;
+    outline: none;
+    cursor: pointer;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 14px; height: 14px;
+    background: var(--accent);
+    border-radius: 50%;
+    cursor: pointer;
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 14px; height: 14px;
+    background: var(--accent);
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+  }
+  button {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 1.5px;
+    background: var(--device);
+    border: 1px solid var(--device-border);
+    color: var(--text);
+    padding: 9px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 100ms ease;
+  }
+  button:hover { border-color: var(--device-border-soft); }
+  button:active { transform: scale(0.97); }
+  button.on {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #0a0a0a;
+  }
+  main {
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    min-height: 0;
+  }
+  .grid {
+    width: 100%;
+    height: 100%;
+    max-width: min(100%, calc(100vh - 160px), calc(100dvh - 160px));
+    aspect-ratio: 1;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(4, 1fr);
+    gap: 10px;
+    padding: 10px;
+    background: var(--grid-bg);
+    border: 1px solid var(--device-border);
+    border-radius: 14px;
+    touch-action: none;
+  }
+  .pad {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--row-bg);
+    color: var(--row-fg);
+    border: 1px solid var(--row-border);
+    border-radius: 8px;
+    cursor: pointer;
+    touch-action: none;
+    transition: transform 60ms ease, background 80ms ease, color 80ms ease, box-shadow 80ms ease;
+    overflow: hidden;
+  }
+  .pad.row-0 { --row-bg: var(--row-0-bg); --row-fg: var(--row-0-fg); --row-border: var(--row-0-border); }
+  .pad.row-1 { --row-bg: var(--row-1-bg); --row-fg: var(--row-1-fg); --row-border: var(--row-1-border); }
+  .pad.row-2 { --row-bg: var(--row-2-bg); --row-fg: var(--row-2-fg); --row-border: var(--row-2-border); }
+  .pad.row-3 { --row-bg: var(--row-3-bg); --row-fg: var(--row-3-fg); --row-border: var(--row-3-border); }
+  .pad.active {
+    background: var(--row-fg);
+    color: #0a0a0a;
+    transform: scale(0.96);
+    box-shadow: 0 0 24px var(--row-fg), inset 0 0 0 1px rgba(255,255,255,0.2);
+  }
+  .pad.edit-mode {
+    box-shadow: inset 0 0 0 2px var(--accent);
+  }
+  .pad-label {
+    font-family: var(--font-kr);
+    font-size: 18px;
+    font-weight: 500;
+    letter-spacing: -0.3px;
+    pointer-events: none;
+    text-align: center;
+    padding: 0 6px;
+    word-break: keep-all;
+  }
+  .pad-sub {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 1.5px;
+    margin-top: 6px;
+    opacity: 0.7;
+    pointer-events: none;
+    max-width: 90%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .pad-key {
+    position: absolute;
+    bottom: 6px; right: 8px;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    font-weight: 500;
+    opacity: 0.4;
+    pointer-events: none;
+  }
+  .pad-badge {
+    position: absolute;
+    top: 6px; left: 8px;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 100ms ease;
+  }
+  .pad.has-custom .pad-badge { opacity: 0.8; }
+  footer {
+    flex: 0 0 auto;
+    padding: 12px 18px;
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: var(--text-fade);
+    border-top: 1px solid var(--device-border);
+  }
+  footer .hl { color: var(--text-dim); }
+  .hidden { display: none !important; }
+
+  .sheet-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 100;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 16px;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+    animation: fadeIn 150ms ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .action-sheet {
+    background: var(--device);
+    border: 1px solid var(--device-border);
+    border-radius: 14px;
+    width: 100%;
+    max-width: 420px;
+    padding: 8px;
+    animation: slideUp 200ms cubic-bezier(0.2, 0.9, 0.3, 1);
+  }
+  .sheet-title {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    color: var(--text-dim);
+    text-align: center;
+    padding: 12px 0 10px;
+    border-bottom: 1px solid var(--device-border);
+    margin-bottom: 8px;
+  }
+  .sheet-btn {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 16px 18px;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    color: var(--text);
+    font-family: var(--font-kr);
+    font-size: 16px;
+    font-weight: 400;
+    letter-spacing: 0;
+    margin-bottom: 4px;
+  }
+  .sheet-btn:hover { background: rgba(255, 255, 255, 0.04); }
+  .sheet-btn:active { background: rgba(255, 255, 255, 0.08); transform: scale(0.99); }
+  .sheet-btn .sheet-icon {
+    display: inline-block;
+    width: 22px;
+    color: var(--accent);
+    margin-right: 10px;
+    font-family: var(--font-mono);
+  }
+  .sheet-btn.cancel {
+    color: var(--text-dim);
+    margin-top: 6px;
+    border-top: 1px solid var(--device-border);
+    padding-top: 16px;
+    border-radius: 0 0 8px 8px;
+  }
+
+  .library-page {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    animation: fadeIn 200ms ease;
+  }
+  .lib-header {
+    flex: 0 0 auto;
+    display: grid;
+    grid-template-columns: 80px 1fr 80px;
+    align-items: center;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--device-border);
+  }
+  .lib-back {
+    justify-self: start;
+    background: transparent;
+    border: none;
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 1.5px;
+    padding: 6px 0;
+  }
+  .lib-title {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    letter-spacing: 2px;
+    text-align: center;
+    color: var(--text);
+  }
+  .lib-target {
+    justify-self: end;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    text-align: right;
+  }
+  .lib-tabs {
+    flex: 0 0 auto;
+    display: flex;
+    gap: 8px;
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--device-border);
+    overflow-x: auto;
+  }
+  .lib-tab {
+    flex: 0 0 auto;
+    padding: 8px 14px;
+    background: var(--device);
+    border: 1px solid var(--device-border);
+    border-radius: 8px;
+    color: var(--text-dim);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 1.2px;
+    white-space: nowrap;
+  }
+  .lib-tab.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #0a0a0a;
+  }
+  .lib-list {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: 8px 18px 18px;
+  }
+  .lib-empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-dim);
+    font-size: 13px;
+    line-height: 1.7;
+  }
+  .lib-empty code {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    background: var(--device);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--text);
+  }
+  .lib-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px;
+    background: var(--device);
+    border: 1px solid var(--device-border);
+    border-radius: 10px;
+    margin-bottom: 8px;
+    transition: background 80ms ease, transform 60ms ease;
+  }
+  .lib-item.previewing {
+    background: var(--device-border-soft);
+    border-color: var(--accent);
+    transform: scale(0.99);
+  }
+  .lib-item-press {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 4px 0;
+    cursor: pointer;
+    touch-action: none;
+  }
+  .lib-item-name {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .lib-item-meta {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+  }
+  .lib-item-loading { color: var(--accent); }
+  .lib-item-assign {
+    flex: 0 0 auto;
+    background: transparent;
+    border: 1px solid var(--device-border-soft);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 1.2px;
+    padding: 8px 14px;
+    border-radius: 8px;
+  }
+  .lib-item-assign:active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #0a0a0a;
+  }
+  .lib-hint {
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: var(--text-fade);
+    padding: 10px 0 4px;
+  }
+
+  @media (max-width: 600px) {
+    header { padding: 10px 12px; gap: 8px; }
+    .brand { font-size: 12px; letter-spacing: 2px; }
+    .group { padding: 5px 10px; }
+    input[type="range"] { width: 70px; }
+    button { padding: 7px 11px; font-size: 10px; }
+    main { padding: 10px; }
+    .pad-label { font-size: 15px; }
+    .pad-sub { font-size: 9px; }
+    footer { font-size: 9px; padding: 8px 12px; }
+    .lib-header { grid-template-columns: 60px 1fr 60px; padding: 10px 14px; }
+    .lib-target { font-size: 9px; }
+    .lib-list { padding: 6px 12px 12px; }
+    .lib-item-name { font-size: 14px; }
+  }
+  @media (max-width: 420px) {
+    .group-label { display: none; }
+    .pad-label { font-size: 13px; }
+  }
+  @media (orientation: landscape) and (max-height: 500px) {
+    .grid { max-width: calc(100vh - 130px); max-width: calc(100dvh - 130px); }
+  }
+</style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <span class="brand-dot"></span>
+      <span>LAUNCHPAD</span>
+    </div>
+    <div class="tools">
+      <div class="group">
+        <span class="group-label">VOL</span>
+        <input type="range" id="volume" min="0" max="100" value="70" />
+        <span class="group-value" id="vol-value">70</span>
+      </div>
+      <button id="edit-btn">EDIT</button>
+      <button id="clear-btn">CLEAR</button>
+    </div>
+  </header>
+  <main>
+    <div class="grid" id="grid"></div>
+  </main>
+  <footer>
+    <span class="hl">탭</span> 연주 · <span class="hl">EDIT</span> 모드에서 패드 누르면 사운드 변경 · 키보드 <span class="hl">1234 / qwer / asdf / zxcv</span>
+  </footer>
+
+  <div class="sheet-overlay hidden" id="action-sheet-overlay">
+    <div class="action-sheet">
+      <div class="sheet-title" id="sheet-title">패드 변경</div>
+      <button class="sheet-btn" id="btn-library"><span class="sheet-icon">≡</span>라이브러리에서 선택</button>
+      <button class="sheet-btn" id="btn-upload"><span class="sheet-icon">↑</span>기기에서 업로드</button>
+      <button class="sheet-btn" id="btn-reset"><span class="sheet-icon">↺</span>기본 사운드로 복귀</button>
+      <button class="sheet-btn cancel" id="btn-cancel">취소</button>
+    </div>
+  </div>
+
+  <div class="library-page hidden" id="library-page">
+    <header class="lib-header">
+      <button class="lib-back" id="lib-back">← 뒤로</button>
+      <div class="lib-title">SOUND LIBRARY</div>
+      <div class="lib-target" id="lib-target"></div>
+    </header>
+    <nav class="lib-tabs" id="lib-tabs"></nav>
+    <main class="lib-list" id="lib-list"></main>
+  </div>
+
+  <input type="file" id="file-input" class="hidden" accept="audio/*" />
+
+<script>
+(function() {
+  const PADS = [
+    { lbl: '킥',     sub: 'KICK',   key: '1', kind: 'kick' },
+    { lbl: '스네어', sub: 'SNARE',  key: '2', kind: 'snare' },
+    { lbl: '클랩',   sub: 'CLAP',   key: '3', kind: 'clap' },
+    { lbl: '림샷',   sub: 'RIM',    key: '4', kind: 'rim' },
+    { lbl: '클햇',   sub: 'C-HAT',  key: 'Q', kind: 'chat' },
+    { lbl: '오픈햇', sub: 'O-HAT',  key: 'W', kind: 'ohat' },
+    { lbl: '라이드', sub: 'RIDE',   key: 'E', kind: 'ride' },
+    { lbl: '크래시', sub: 'CRASH',  key: 'R', kind: 'crash' },
+    { lbl: '베이스 C', sub: 'BASS', key: 'A', kind: 'bass', freq: 65.41 },
+    { lbl: '베이스 G', sub: 'BASS', key: 'S', kind: 'bass', freq: 98.00 },
+    { lbl: '서브',   sub: 'SUB',    key: 'D', kind: 'sub' },
+    { lbl: '808',    sub: '808',    key: 'F', kind: '808' },
+    { lbl: '리드 C', sub: 'LEAD',   key: 'Z', kind: 'lead', freq: 523.25 },
+    { lbl: '리드 E', sub: 'LEAD',   key: 'X', kind: 'lead', freq: 659.25 },
+    { lbl: '패드',   sub: 'PAD',    key: 'C', kind: 'pad' },
+    { lbl: 'FX',     sub: 'RISER',  key: 'V', kind: 'fx' }
+  ];
+
+  const KEY_MAP = {
+    '1':0,'2':1,'3':2,'4':3,
+    'q':4,'w':5,'e':6,'r':7,
+    'a':8,'s':9,'d':10,'f':11,
+    'z':12,'x':13,'c':14,'v':15
+  };
+
+  const DB_NAME = 'launchpad-db';
+  const STORE = 'overrides';
+
+  let ctx = null;
+  let masterGain = null;
+  const overrides = {};
+  let editMode = false;
+  let activePadId = null;
+
+  let manifestData = null;
+  const packCache = {};
+  const bufferCache = {};
+  let currentLibraryTab = 'synth';
+  let activePreview = null;
+
+  function ensureCtx() {
+    if (!ctx) {
+      ctx = new (window.AudioContext || window.webkitAudioContext)();
+      masterGain = ctx.createGain();
+      masterGain.gain.value = parseFloat(document.getElementById('volume').value) / 100;
+      masterGain.connect(ctx.destination);
+    }
+    if (ctx.state === 'suspended') ctx.resume();
+    return ctx;
+  }
+
+  function makeNoise(duration) {
+    const buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * duration), ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+    return buf;
+  }
+
+  const SYNTH = {
+    kick(t) {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.frequency.setValueAtTime(150, t);
+      o.frequency.exponentialRampToValueAtTime(0.01, t + 0.5);
+      g.gain.setValueAtTime(1, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+      o.connect(g).connect(masterGain);
+      o.start(t); o.stop(t + 0.5);
+    },
+    snare(t) {
+      const n = ctx.createBufferSource();
+      n.buffer = makeNoise(0.2);
+      const f = ctx.createBiquadFilter();
+      f.type = 'highpass'; f.frequency.value = 1500;
+      const ng = ctx.createGain();
+      ng.gain.setValueAtTime(0.5, t);
+      ng.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+      n.connect(f).connect(ng).connect(masterGain);
+      n.start(t);
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = 'triangle'; o.frequency.value = 200;
+      g.gain.setValueAtTime(0.6, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+      o.connect(g).connect(masterGain);
+      o.start(t); o.stop(t + 0.1);
+    },
+    clap(t) {
+      for (let i = 0; i < 3; i++) {
+        const start = t + i * 0.012;
+        const n = ctx.createBufferSource();
+        n.buffer = makeNoise(0.08);
+        const f = ctx.createBiquadFilter();
+        f.type = 'bandpass'; f.frequency.value = 1200; f.Q.value = 1.5;
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(0.6, start);
+        g.gain.exponentialRampToValueAtTime(0.001, start + 0.08);
+        n.connect(f).connect(g).connect(masterGain);
+        n.start(start);
+      }
+    },
+    rim(t) {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = 'square'; o.frequency.value = 1200;
+      g.gain.setValueAtTime(0.4, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+      o.connect(g).connect(masterGain);
+      o.start(t); o.stop(t + 0.05);
+    },
+    chat(t) {
+      const n = ctx.createBufferSource();
+      n.buffer = makeNoise(0.05);
+      const f = ctx.createBiquadFilter();
+      f.type = 'highpass'; f.frequency.value = 8000;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.4, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+      n.connect(f).connect(g).connect(masterGain);
+      n.start(t);
+    },
+    ohat(t) {
+      const n = ctx.createBufferSource();
+      n.buffer = makeNoise(0.4);
+      const f = ctx.createBiquadFilter();
+      f.type = 'highpass'; f.frequency.value = 7000;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.4, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+      n.connect(f).connect(g).connect(masterGain);
+      n.start(t);
+    },
+    ride(t) {
+      const n = ctx.createBufferSource();
+      n.buffer = makeNoise(0.6);
+      const f = ctx.createBiquadFilter();
+      f.type = 'bandpass'; f.frequency.value = 5000; f.Q.value = 0.8;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.3, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
+      n.connect(f).connect(g).connect(masterGain);
+      n.start(t);
+    },
+    crash(t) {
+      const n = ctx.createBufferSource();
+      n.buffer = makeNoise(1.2);
+      const f = ctx.createBiquadFilter();
+      f.type = 'highpass'; f.frequency.value = 4000;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.5, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 1.2);
+      n.connect(f).connect(g).connect(masterGain);
+      n.start(t);
+    },
+    bass(t, freq) {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = 'sawtooth'; o.frequency.value = freq;
+      const f = ctx.createBiquadFilter();
+      f.type = 'lowpass';
+      f.frequency.setValueAtTime(900, t);
+      f.frequency.exponentialRampToValueAtTime(120, t + 0.6);
+      g.gain.setValueAtTime(0.5, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
+      o.connect(f).connect(g).connect(masterGain);
+      o.start(t); o.stop(t + 0.6);
+    },
+    sub(t) {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = 'sine'; o.frequency.value = 55;
+      g.gain.setValueAtTime(0.85, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.7);
+      o.connect(g).connect(masterGain);
+      o.start(t); o.stop(t + 0.7);
+    },
+    '808'(t) {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = 'sine';
+      o.frequency.setValueAtTime(120, t);
+      o.frequency.exponentialRampToValueAtTime(45, t + 0.15);
+      g.gain.setValueAtTime(0.9, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 1.2);
+      o.connect(g).connect(masterGain);
+      o.start(t); o.stop(t + 1.2);
+    },
+    lead(t, freq) {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = 'square'; o.frequency.value = freq;
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(0.3, t + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+      o.connect(g).connect(masterGain);
+      o.start(t); o.stop(t + 0.5);
+    },
+    pad(t) {
+      [261.63, 329.63, 392.00].forEach(freq => {
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.type = 'sine'; o.frequency.value = freq;
+        g.gain.setValueAtTime(0, t);
+        g.gain.linearRampToValueAtTime(0.13, t + 0.3);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 1.6);
+        o.connect(g).connect(masterGain);
+        o.start(t); o.stop(t + 1.6);
+      });
+    },
+    fx(t) {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = 'sawtooth';
+      o.frequency.setValueAtTime(100, t);
+      o.frequency.exponentialRampToValueAtTime(2200, t + 0.7);
+      g.gain.setValueAtTime(0.25, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.7);
+      const f = ctx.createBiquadFilter();
+      f.type = 'lowpass'; f.frequency.value = 3000;
+      o.connect(f).connect(g).connect(masterGain);
+      o.start(t); o.stop(t + 0.7);
+    }
+  };
+
+  function playSynthByKind(kind, freq) {
+    const t = ctx.currentTime;
+    const fn = SYNTH[kind];
+    if (!fn) return;
+    if (kind === 'bass' || kind === 'lead') fn(t, freq);
+    else fn(t);
+  }
+
+  function playBuffer(buffer) {
+    const src = ctx.createBufferSource();
+    src.buffer = buffer;
+    src.connect(masterGain);
+    src.start(ctx.currentTime);
+  }
+
+  function playPad(idx) {
+    ensureCtx();
+    const ov = overrides[idx];
+    if (ov && ov.buffer) {
+      playBuffer(ov.buffer);
+    } else if (ov && ov.type === 'synth') {
+      playSynthByKind(ov.kind, ov.freq);
+    } else {
+      playSynthByKind(PADS[idx].kind, PADS[idx].freq);
+    }
+  }
+
+  function flashPad(idx) {
+    const el = document.querySelector('[data-pad="' + idx + '"]');
+    if (!el) return;
+    el.classList.add('active');
+    setTimeout(() => el.classList.remove('active'), 110);
+  }
+
+  function getPadDisplayName(idx) {
+    const ov = overrides[idx];
+    if (ov && ov.name) return ov.name;
+    return PADS[idx].sub;
+  }
+
+  function updatePadVisual(idx) {
+    const el = document.querySelector('[data-pad="' + idx + '"]');
+    if (!el) return;
+    const sub = el.querySelector('.pad-sub');
+    const ov = overrides[idx];
+    if (ov) {
+      el.classList.add('has-custom');
+      const name = getPadDisplayName(idx);
+      sub.textContent = name.length > 10 ? name.slice(0, 10) + '…' : name;
+    } else {
+      el.classList.remove('has-custom');
+      sub.textContent = PADS[idx].sub;
+    }
+  }
+
+  function handlePadDown(idx) {
+    if (editMode) {
+      activePadId = idx;
+      showActionSheet(idx);
+    } else {
+      playPad(idx);
+      flashPad(idx);
+    }
+  }
+
+  function buildGrid() {
+    const grid = document.getElementById('grid');
+    grid.innerHTML = '';
+    PADS.forEach((p, i) => {
+      const row = Math.floor(i / 4);
+      const el = document.createElement('div');
+      el.className = 'pad row-' + row;
+      el.dataset.pad = i;
+      el.innerHTML =
+        '<div class="pad-badge"></div>' +
+        '<div class="pad-label">' + p.lbl + '</div>' +
+        '<div class="pad-sub">' + p.sub + '</div>' +
+        '<div class="pad-key">' + p.key + '</div>';
+      el.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        handlePadDown(i);
+      });
+      el.addEventListener('contextmenu', (e) => e.preventDefault());
+      grid.appendChild(el);
+    });
+  }
+
+  function setEditMode(on) {
+    editMode = on;
+    const btn = document.getElementById('edit-btn');
+    btn.classList.toggle('on', on);
+    btn.textContent = on ? 'DONE' : 'EDIT';
+    document.querySelectorAll('.pad').forEach(el => el.classList.toggle('edit-mode', on));
+  }
+
+  function showActionSheet(idx) {
+    document.getElementById('sheet-title').textContent = '패드 ' + (idx + 1) + ' — ' + PADS[idx].lbl;
+    document.getElementById('action-sheet-overlay').classList.remove('hidden');
+  }
+  function hideActionSheet() {
+    document.getElementById('action-sheet-overlay').classList.add('hidden');
+  }
+
+  document.getElementById('action-sheet-overlay').addEventListener('click', (e) => {
+    if (e.target.id === 'action-sheet-overlay') hideActionSheet();
+  });
+  document.getElementById('btn-cancel').addEventListener('click', hideActionSheet);
+
+  document.getElementById('btn-upload').addEventListener('click', () => {
+    hideActionSheet();
+    document.getElementById('file-input').click();
+  });
+
+  document.getElementById('btn-reset').addEventListener('click', async () => {
+    hideActionSheet();
+    if (activePadId == null) return;
+    delete overrides[activePadId];
+    await deleteOverrideFromDB(activePadId);
+    updatePadVisual(activePadId);
+  });
+
+  document.getElementById('btn-library').addEventListener('click', () => {
+    hideActionSheet();
+    openLibrary(activePadId);
+  });
+
+  function openDB() {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(DB_NAME, 2);
+      req.onupgradeneeded = (e) => {
+        const db = req.result;
+        if (db.objectStoreNames.contains('samples') && !db.objectStoreNames.contains(STORE)) {
+          db.deleteObjectStore('samples');
+        }
+        if (!db.objectStoreNames.contains(STORE)) {
+          db.createObjectStore(STORE);
+        }
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  async function saveOverrideToDB(idx, payload) {
+    try {
+      const db = await openDB();
+      const tx = db.transaction(STORE, 'readwrite');
+      tx.objectStore(STORE).put(payload, idx);
+      await new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = () => rej(tx.error); });
+    } catch (e) { console.warn('DB save failed', e); }
+  }
+
+  async function deleteOverrideFromDB(idx) {
+    try {
+      const db = await openDB();
+      const tx = db.transaction(STORE, 'readwrite');
+      tx.objectStore(STORE).delete(idx);
+      await new Promise((res) => { tx.oncomplete = res; });
+    } catch (e) { console.warn('DB delete failed', e); }
+  }
+
+  async function loadOverridesFromDB() {
+    try {
+      const db = await openDB();
+      const tx = db.transaction(STORE, 'readonly');
+      const store = tx.objectStore(STORE);
+      return new Promise((resolve) => {
+        const out = {};
+        const req = store.openCursor();
+        req.onsuccess = (e) => {
+          const cursor = e.target.result;
+          if (cursor) { out[cursor.key] = cursor.value; cursor.continue(); }
+          else resolve(out);
+        };
+        req.onerror = () => resolve({});
+      });
+    } catch (e) { console.warn('DB load failed', e); return {}; }
+  }
+
+  async function clearOverridesFromDB() {
+    try {
+      const db = await openDB();
+      const tx = db.transaction(STORE, 'readwrite');
+      tx.objectStore(STORE).clear();
+      await new Promise((res) => { tx.oncomplete = res; });
+    } catch (e) { console.warn('DB clear failed', e); }
+  }
+
+  async function restoreOverrides() {
+    const stored = await loadOverridesFromDB();
+    const keys = Object.keys(stored);
+    if (keys.length === 0) return;
+    ensureCtx();
+    for (const k of keys) {
+      const idx = parseInt(k);
+      const entry = stored[k];
+      try {
+        if (entry.source === 'upload') {
+          const buf = await ctx.decodeAudioData(entry.data.slice(0));
+          overrides[idx] = { type: 'upload', buffer: buf, name: entry.name };
+        } else if (entry.source === 'library') {
+          const url = 'sounds/' + entry.packId + '/' + entry.file;
+          const buf = await fetchBuffer(url);
+          overrides[idx] = { type: 'library', buffer: buf, packId: entry.packId, file: entry.file, name: entry.name };
+        } else if (entry.source === 'synth') {
+          overrides[idx] = { type: 'synth', kind: entry.kind, freq: entry.freq, name: entry.name };
+        }
+        updatePadVisual(idx);
+      } catch (e) {
+        console.warn('restore failed for pad', idx, e);
+      }
+    }
+  }
+
+  async function fetchBuffer(url) {
+    if (bufferCache[url]) return bufferCache[url];
+    ensureCtx();
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('fetch failed: ' + res.status);
+    const arr = await res.arrayBuffer();
+    const buf = await ctx.decodeAudioData(arr);
+    bufferCache[url] = buf;
+    return buf;
+  }
+
+  async function fetchManifest() {
+    try {
+      const res = await fetch('sounds/manifest.json');
+      if (!res.ok) throw new Error('manifest not found');
+      manifestData = await res.json();
+    } catch (e) {
+      manifestData = { packs: [] };
+    }
+  }
+
+  async function fetchPack(packId) {
+    if (packCache[packId]) return packCache[packId];
+    const res = await fetch('sounds/' + packId + '/pack.json');
+    if (!res.ok) throw new Error('pack fetch failed');
+    const data = await res.json();
+    packCache[packId] = data;
+    return data;
+  }
+
+  function openLibrary(padIdx) {
+    document.getElementById('lib-target').textContent = '패드 ' + (padIdx + 1) + ' (' + PADS[padIdx].lbl + ')';
+    document.getElementById('library-page').classList.remove('hidden');
+    renderLibraryTabs();
+    renderLibraryList(currentLibraryTab);
+  }
+  function closeLibrary() {
+    stopPreview();
+    document.getElementById('library-page').classList.add('hidden');
+  }
+
+  document.getElementById('lib-back').addEventListener('click', closeLibrary);
+
+  function renderLibraryTabs() {
+    const tabs = document.getElementById('lib-tabs');
+    tabs.innerHTML = '';
+    const allTabs = [{ id: 'synth', name: '기본 신스' }];
+    if (manifestData && manifestData.packs) {
+      manifestData.packs.forEach(p => allTabs.push({ id: p.id, name: p.name }));
+    }
+    allTabs.forEach(t => {
+      const btn = document.createElement('button');
+      btn.className = 'lib-tab' + (t.id === currentLibraryTab ? ' active' : '');
+      btn.textContent = t.name;
+      btn.addEventListener('click', () => {
+        currentLibraryTab = t.id;
+        renderLibraryTabs();
+        renderLibraryList(t.id);
+      });
+      tabs.appendChild(btn);
+    });
+  }
+
+  async function renderLibraryList(tabId) {
+    const list = document.getElementById('lib-list');
+    list.innerHTML = '<div class="lib-hint">로딩 중…</div>';
+    let items = [];
+    if (tabId === 'synth') {
+      items = PADS.map((p, i) => ({
+        kind: 'synth',
+        synthKind: p.kind,
+        freq: p.freq,
+        name: p.lbl,
+        meta: p.sub
+      }));
+    } else {
+      try {
+        const pack = await fetchPack(tabId);
+        items = (pack.sounds || []).map(s => ({
+          kind: 'sample',
+          packId: tabId,
+          file: s.file,
+          name: s.name,
+          meta: s.file
+        }));
+      } catch (e) {
+        list.innerHTML = '<div class="lib-empty">팩을 불러올 수 없어요.<br><br>' +
+          '<code>sounds/' + tabId + '/pack.json</code> 파일을 확인하세요.</div>';
+        return;
+      }
+    }
+    if (items.length === 0) {
+      list.innerHTML = '<div class="lib-empty">사운드가 없어요.<br><br>' +
+        '<code>sounds/' + tabId + '/pack.json</code>에 항목을 추가하세요.</div>';
+      return;
+    }
+    list.innerHTML = '<div class="lib-hint">사운드 누르고 있으면 미리듣기 · "할당" 누르면 패드에 적용</div>';
+    items.forEach((item, i) => {
+      const row = document.createElement('div');
+      row.className = 'lib-item';
+      row.innerHTML =
+        '<div class="lib-item-press">' +
+          '<div class="lib-item-name">' + item.name + '</div>' +
+          '<div class="lib-item-meta"></div>' +
+        '</div>' +
+        '<button class="lib-item-assign">할당</button>';
+      const meta = row.querySelector('.lib-item-meta');
+      meta.textContent = item.meta || '';
+      const press = row.querySelector('.lib-item-press');
+      press.addEventListener('pointerdown', async (e) => {
+        e.preventDefault();
+        row.classList.add('previewing');
+        if (item.kind === 'synth') {
+          ensureCtx();
+          playSynthByKind(item.synthKind, item.freq);
+        } else {
+          meta.textContent = '로딩…';
+          meta.classList.add('lib-item-loading');
+          try {
+            const url = 'sounds/' + item.packId + '/' + item.file;
+            const buf = await fetchBuffer(url);
+            meta.textContent = item.meta;
+            meta.classList.remove('lib-item-loading');
+            stopPreview();
+            ensureCtx();
+            const src = ctx.createBufferSource();
+            src.buffer = buf;
+            src.connect(masterGain);
+            src.start();
+            activePreview = { src, row };
+          } catch (err) {
+            meta.textContent = '로딩 실패';
+            meta.classList.remove('lib-item-loading');
+            row.classList.remove('previewing');
+          }
+        }
+      });
+      const cancelPress = () => {
+        row.classList.remove('previewing');
+        if (item.kind === 'sample') stopPreview();
+      };
+      press.addEventListener('pointerup', cancelPress);
+      press.addEventListener('pointercancel', cancelPress);
+      press.addEventListener('pointerleave', cancelPress);
+
+      row.querySelector('.lib-item-assign').addEventListener('click', async () => {
+        await assignFromLibrary(item);
+        closeLibrary();
+      });
+      list.appendChild(row);
+    });
+  }
+
+  function stopPreview() {
+    if (activePreview) {
+      try { activePreview.src.stop(); } catch (e) {}
+      activePreview.row.classList.remove('previewing');
+      activePreview = null;
+    }
+  }
+
+  async function assignFromLibrary(item) {
+    if (activePadId == null) return;
+    const idx = activePadId;
+    if (item.kind === 'synth') {
+      overrides[idx] = { type: 'synth', kind: item.synthKind, freq: item.freq, name: item.name };
+      await saveOverrideToDB(idx, { source: 'synth', kind: item.synthKind, freq: item.freq, name: item.name });
+    } else {
+      try {
+        const url = 'sounds/' + item.packId + '/' + item.file;
+        const buf = await fetchBuffer(url);
+        overrides[idx] = { type: 'library', buffer: buf, packId: item.packId, file: item.file, name: item.name };
+        await saveOverrideToDB(idx, { source: 'library', packId: item.packId, file: item.file, name: item.name });
+      } catch (e) {
+        alert('사운드를 불러올 수 없어요.');
+        return;
+      }
+    }
+    updatePadVisual(idx);
+  }
+
+  buildGrid();
+
+  document.getElementById('edit-btn').addEventListener('click', () => setEditMode(!editMode));
+
+  document.getElementById('clear-btn').addEventListener('click', async () => {
+    if (!confirm('변경된 모든 사운드를 기본값으로 되돌릴까요?')) return;
+    Object.keys(overrides).forEach(k => delete overrides[k]);
+    await clearOverridesFromDB();
+    PADS.forEach((_, i) => updatePadVisual(i));
+  });
+
+  const volSlider = document.getElementById('volume');
+  const volValue = document.getElementById('vol-value');
+  volSlider.addEventListener('input', (e) => {
+    const v = parseFloat(e.target.value);
+    volValue.textContent = Math.round(v);
+    ensureCtx();
+    if (masterGain) masterGain.gain.value = v / 100;
+  });
+
+  document.getElementById('file-input').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    const idx = activePadId;
+    e.target.value = '';
+    if (!file || idx == null) return;
+    try {
+      ensureCtx();
+      const arr = await file.arrayBuffer();
+      const buf = await ctx.decodeAudioData(arr.slice(0));
+      const name = file.name.replace(/\.[^.]+$/, '');
+      overrides[idx] = { type: 'upload', buffer: buf, name };
+      await saveOverrideToDB(idx, { source: 'upload', name: file.name, data: arr });
+      updatePadVisual(idx);
+    } catch (err) {
+      alert('이 파일을 디코딩할 수 없어요.\nmp3, wav, m4a, ogg 같은 포맷을 시도해 보세요.');
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.repeat) return;
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    const k = e.key.toLowerCase();
+    if (k in KEY_MAP) {
+      e.preventDefault();
+      const idx = KEY_MAP[k];
+      if (!editMode) { playPad(idx); flashPad(idx); }
+    }
+    if (e.key === 'Escape') {
+      if (!document.getElementById('library-page').classList.contains('hidden')) closeLibrary();
+      else if (!document.getElementById('action-sheet-overlay').classList.contains('hidden')) hideActionSheet();
+    }
+  });
+
+  document.addEventListener('gesturestart', (e) => e.preventDefault());
+  document.addEventListener('dblclick', (e) => e.preventDefault());
+
+  fetchManifest().then(() => restoreOverrides());
+})();
+</script>
+</body>
+</html>

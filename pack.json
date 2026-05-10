@@ -1,0 +1,23 @@
+{
+  "id": "pack-1",
+  "name": "팩 1",
+  "credits": "여기에 출처/라이선스 적기",
+  "sounds": [
+    { "name": "킥 1",   "file": "01-kick.wav" },
+    { "name": "킥 2",   "file": "02-kick-deep.wav" },
+    { "name": "스네어 1", "file": "03-snare.wav" },
+    { "name": "스네어 2", "file": "04-snare-tight.wav" },
+    { "name": "클랩",   "file": "05-clap.wav" },
+    { "name": "림샷",   "file": "06-rim.wav" },
+    { "name": "클햇",   "file": "07-hat-closed.wav" },
+    { "name": "오픈햇", "file": "08-hat-open.wav" },
+    { "name": "라이드", "file": "09-ride.wav" },
+    { "name": "크래시", "file": "10-crash.wav" },
+    { "name": "탐 로우", "file": "11-tom-low.wav" },
+    { "name": "탐 하이", "file": "12-tom-high.wav" },
+    { "name": "퍼크 1", "file": "13-perc-1.wav" },
+    { "name": "퍼크 2", "file": "14-perc-2.wav" },
+    { "name": "셰이커", "file": "15-shaker.wav" },
+    { "name": "FX",     "file": "16-fx.wav" }
+  ]
+}

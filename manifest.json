@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "packs": [
+    { "id": "pack-1", "name": "팩 1" },
+    { "id": "pack-2", "name": "팩 2" }
+  ]
+}
