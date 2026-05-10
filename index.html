@@ -131,6 +131,24 @@
     cursor: pointer;
     border: none;
   }
+  input[type="number"] {
+    width: 50px;
+    background: #1a1815;
+    border: 1px solid var(--device-border);
+    border-radius: 4px;
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    text-align: center;
+    padding: 3px 4px;
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
   button {
     font-family: var(--font-mono);
     font-size: 11px;
@@ -150,6 +168,38 @@
     background: var(--accent);
     border-color: var(--accent);
     color: #0a0a0a;
+  }
+  button.recording {
+    background: #d23333;
+    border-color: #d23333;
+    color: #fff;
+    animation: recPulse 1.2s ease-in-out infinite;
+  }
+  button.recording::before {
+    content: "● ";
+    color: #fff;
+  }
+  @keyframes recPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(210, 51, 51, 0.55); }
+    50%      { box-shadow: 0 0 0 8px rgba(210, 51, 51, 0); }
+  }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  .rec-toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--device);
+    border: 1px solid var(--device-border-soft);
+    color: var(--text);
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 1px;
+    z-index: 300;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+    animation: fadeIn 200ms ease;
   }
   main {
     flex: 1 1 auto;
@@ -554,6 +604,12 @@
         <input type="range" id="volume" min="0" max="100" value="70" />
         <span class="group-value" id="vol-value">70</span>
       </div>
+      <div class="group">
+        <span class="group-label">BPM</span>
+        <input type="number" id="bpm" min="40" max="240" step="1" value="120" />
+      </div>
+      <button id="metro-btn" title="메트로놈">METRO</button>
+      <button id="rec-btn" title="녹음 시작/정지 (MP3 다운로드)">REC</button>
       <button id="edit-btn">EDIT</button>
       <button id="clear-btn">CLEAR</button>
     </div>
@@ -587,6 +643,8 @@
 
   <input type="file" id="file-input" class="hidden" accept="audio/*" />
 
+<!-- lamejs: in-browser MP3 encoder (used to convert WebM/Opus recording to MP3) -->
+<script src="https://cdn.jsdelivr.net/npm/@breezystack/lamejs@1.2.7/lame.all.js"></script>
 <script>
 (function() {
   const PADS = [
@@ -630,12 +688,17 @@
   let currentLibraryTab = 'synth';
   let activePreview = null;
 
+  // Metronome routes through its own gain so it never gets recorded
+  let metroGain = null;
   function ensureCtx() {
     if (!ctx) {
       ctx = new (window.AudioContext || window.webkitAudioContext)();
       masterGain = ctx.createGain();
       masterGain.gain.value = parseFloat(document.getElementById('volume').value) / 100;
       masterGain.connect(ctx.destination);
+      metroGain = ctx.createGain();
+      metroGain.gain.value = 0.5;
+      metroGain.connect(ctx.destination);
     }
     if (ctx.state === 'suspended') ctx.resume();
     return ctx;
@@ -1316,6 +1379,208 @@
 
   document.addEventListener('gesturestart', (e) => e.preventDefault());
   document.addEventListener('dblclick', (e) => e.preventDefault());
+
+  // ---------- METRONOME ----------
+  let metroOn = false;
+  let bpm = 120;
+  let nextTickTime = 0;
+  let metroBeat = 0;
+  let metroSchedulerId = null;
+
+  function metroTick(time, accent) {
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.frequency.value = accent ? 1800 : 1200;
+    o.type = 'square';
+    g.gain.setValueAtTime(accent ? 0.35 : 0.22, time);
+    g.gain.exponentialRampToValueAtTime(0.001, time + 0.04);
+    o.connect(g).connect(metroGain);
+    o.start(time); o.stop(time + 0.05);
+  }
+  function metroSchedule() {
+    const lookahead = 0.12;
+    while (nextTickTime < ctx.currentTime + lookahead) {
+      metroTick(nextTickTime, metroBeat % 4 === 0);
+      metroBeat++;
+      nextTickTime += 60 / bpm;
+    }
+  }
+  function startMetro() {
+    if (metroOn) return;
+    ensureCtx();
+    metroOn = true;
+    metroBeat = 0;
+    nextTickTime = ctx.currentTime + 0.05;
+    metroSchedulerId = setInterval(metroSchedule, 25);
+    document.getElementById('metro-btn').classList.add('on');
+  }
+  function stopMetro() {
+    metroOn = false;
+    if (metroSchedulerId) { clearInterval(metroSchedulerId); metroSchedulerId = null; }
+    document.getElementById('metro-btn').classList.remove('on');
+  }
+  document.getElementById('metro-btn').addEventListener('click', () => {
+    if (metroOn) stopMetro(); else startMetro();
+  });
+  const bpmInput = document.getElementById('bpm');
+  bpmInput.addEventListener('change', () => {
+    let v = parseInt(bpmInput.value, 10);
+    if (!Number.isFinite(v)) v = 120;
+    v = Math.max(40, Math.min(240, v));
+    bpmInput.value = v;
+    bpm = v;
+    // If running, reset upcoming-tick scheduling so new tempo applies immediately
+    if (metroOn) {
+      nextTickTime = Math.max(nextTickTime, ctx.currentTime + 0.05);
+    }
+  });
+
+  // ---------- RECORDING + MP3 EXPORT ----------
+  let recDest = null;
+  let mediaRecorder = null;
+  let recordedChunks = [];
+  let recording = false;
+  let recordStartTime = 0;
+  let recordTimerId = null;
+
+  function ensureRecDest() {
+    if (!recDest) {
+      recDest = ctx.createMediaStreamDestination();
+      masterGain.connect(recDest);
+    }
+  }
+  function pickMime() {
+    if (typeof MediaRecorder === 'undefined') return null;
+    const opts = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4;codecs=mp4a.40.2', 'audio/mp4'];
+    for (const m of opts) {
+      try { if (MediaRecorder.isTypeSupported(m)) return m; } catch (e) {}
+    }
+    return '';
+  }
+  function fileNameTimestamp() {
+    const d = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    return 'launchpad_' + d.getFullYear() + pad(d.getMonth()+1) + pad(d.getDate())
+      + '_' + pad(d.getHours()) + pad(d.getMinutes()) + pad(d.getSeconds());
+  }
+  function triggerDownload(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }
+  function showToast(msg, ms) {
+    const old = document.querySelector('.rec-toast');
+    if (old) old.remove();
+    const t = document.createElement('div');
+    t.className = 'rec-toast';
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), ms || 2400);
+  }
+  function floatTo16BitPCM(floatArr) {
+    const out = new Int16Array(floatArr.length);
+    for (let i = 0; i < floatArr.length; i++) {
+      const s = Math.max(-1, Math.min(1, floatArr[i]));
+      out[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+    }
+    return out;
+  }
+  function audioBufferToMp3Blob(buffer) {
+    if (typeof lamejs === 'undefined' || !lamejs.Mp3Encoder) {
+      throw new Error('lamejs not loaded');
+    }
+    const sampleRate = buffer.sampleRate;
+    const channels = Math.min(buffer.numberOfChannels, 2);
+    const left = floatTo16BitPCM(buffer.getChannelData(0));
+    const right = channels > 1 ? floatTo16BitPCM(buffer.getChannelData(1)) : null;
+    const enc = new lamejs.Mp3Encoder(channels, sampleRate, 192);
+    const block = 1152;
+    const out = [];
+    for (let i = 0; i < left.length; i += block) {
+      const l = left.subarray(i, i + block);
+      const r = right ? right.subarray(i, i + block) : null;
+      const mp3 = channels === 2 ? enc.encodeBuffer(l, r) : enc.encodeBuffer(l);
+      if (mp3.length) out.push(mp3);
+    }
+    const tail = enc.flush();
+    if (tail.length) out.push(tail);
+    return new Blob(out, { type: 'audio/mpeg' });
+  }
+  function updateRecButton() {
+    const btn = document.getElementById('rec-btn');
+    btn.classList.toggle('recording', recording);
+    if (recording) {
+      const elapsed = ((Date.now() - recordStartTime) / 1000) | 0;
+      const m = String((elapsed / 60) | 0).padStart(2, '0');
+      const s = String(elapsed % 60).padStart(2, '0');
+      btn.textContent = 'STOP ' + m + ':' + s;
+    } else {
+      btn.textContent = 'REC';
+    }
+  }
+  async function startRecord() {
+    if (recording) return;
+    if (typeof MediaRecorder === 'undefined') {
+      alert('이 브라우저는 녹음을 지원하지 않습니다 (MediaRecorder 미지원).');
+      return;
+    }
+    ensureCtx();
+    ensureRecDest();
+    recordedChunks = [];
+    const mime = pickMime();
+    try {
+      mediaRecorder = mime
+        ? new MediaRecorder(recDest.stream, { mimeType: mime })
+        : new MediaRecorder(recDest.stream);
+    } catch (e) {
+      alert('녹음을 시작할 수 없습니다: ' + e.message);
+      return;
+    }
+    mediaRecorder.ondataavailable = (e) => { if (e.data && e.data.size > 0) recordedChunks.push(e.data); };
+    mediaRecorder.onstop = onRecordStop;
+    mediaRecorder.start(200);
+    recording = true;
+    recordStartTime = Date.now();
+    updateRecButton();
+    recordTimerId = setInterval(updateRecButton, 1000);
+    showToast('녹음 시작 — 다시 누르면 정지·MP3 저장');
+  }
+  function stopRecord() {
+    if (!recording || !mediaRecorder) return;
+    recording = false;
+    if (recordTimerId) { clearInterval(recordTimerId); recordTimerId = null; }
+    try { mediaRecorder.stop(); } catch (e) {}
+    updateRecButton();
+    showToast('인코딩 중…', 5000);
+  }
+  async function onRecordStop() {
+    const mime = (mediaRecorder && mediaRecorder.mimeType) || 'audio/webm';
+    const blob = new Blob(recordedChunks, { type: mime });
+    if (blob.size === 0) {
+      showToast('녹음된 데이터가 없습니다.');
+      return;
+    }
+    const baseName = fileNameTimestamp();
+    try {
+      const arr = await blob.arrayBuffer();
+      const decoded = await ctx.decodeAudioData(arr.slice(0));
+      const mp3 = audioBufferToMp3Blob(decoded);
+      triggerDownload(mp3, baseName + '.mp3');
+      showToast('저장 완료: ' + baseName + '.mp3');
+    } catch (err) {
+      console.warn('MP3 인코딩 실패, 원본 포맷으로 다운로드합니다.', err);
+      const ext = mime.indexOf('mp4') >= 0 ? 'm4a' : 'webm';
+      triggerDownload(blob, baseName + '.' + ext);
+      showToast('MP3 인코딩 실패 — ' + ext.toUpperCase() + '로 저장됨');
+    }
+  }
+  document.getElementById('rec-btn').addEventListener('click', () => {
+    if (recording) stopRecord(); else startRecord();
+  });
 
   fetchManifest().then(() => restoreOverrides());
 })();
