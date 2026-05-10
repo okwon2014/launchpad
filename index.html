@@ -261,6 +261,15 @@
     text-align: center;
     padding: 0 6px;
     word-break: keep-all;
+    overflow-wrap: anywhere;
+    line-height: 1.15;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .pad.has-custom .pad-label {
+    font-size: 15px;
   }
   .pad-sub {
     font-family: var(--font-mono);
@@ -306,6 +315,13 @@
     border-top: 1px solid var(--device-border);
   }
   footer .hl { color: var(--text-dim); }
+  footer .footer-note {
+    margin-top: 5px;
+    font-size: 9px;
+    letter-spacing: 0.5px;
+    color: var(--text-fade);
+    opacity: 0.85;
+  }
   .hidden { display: none !important; }
 
   .sheet-overlay {
@@ -605,6 +621,16 @@
         <span class="group-value" id="vol-value">70</span>
       </div>
       <div class="group">
+        <span class="group-label">PITCH</span>
+        <input type="range" id="pitch" min="-12" max="12" step="1" value="0" />
+        <span class="group-value" id="pitch-value">0</span>
+      </div>
+      <div class="group">
+        <span class="group-label">SPEED</span>
+        <input type="range" id="speed" min="50" max="200" step="5" value="100" />
+        <span class="group-value" id="speed-value">1.0×</span>
+      </div>
+      <div class="group">
         <span class="group-label">BPM</span>
         <input type="number" id="bpm" min="40" max="240" step="1" value="120" />
       </div>
@@ -618,7 +644,8 @@
     <div class="grid" id="grid"></div>
   </main>
   <footer>
-    <span class="hl">탭</span> 연주 · <span class="hl">EDIT</span> 모드에서 패드 누르면 사운드 변경 · 키보드 <span class="hl">1234 / qwer / asdf / zxcv</span>
+    <div><span class="hl">탭</span> 연주 · <span class="hl">EDIT</span> 모드에서 패드 누르면 사운드 변경 · 키보드 <span class="hl">1234 / qwer / asdf / zxcv</span></div>
+    <div class="footer-note">※ 사운드 라이브러리에 다녀오거나 기본값으로 되돌린 직후 동작이 어색하면 페이지 새로고침</div>
   </footer>
 
   <div class="sheet-overlay hidden" id="action-sheet-overlay">
@@ -879,6 +906,8 @@
   function playBuffer(buffer) {
     const src = ctx.createBufferSource();
     src.buffer = buffer;
+    src.playbackRate.value = playbackRate;
+    src.detune.value = pitchSemitones * 100;
     src.connect(masterGain);
     src.start(ctx.currentTime);
   }
@@ -931,14 +960,16 @@
   function updatePadVisual(idx) {
     const el = document.querySelector('[data-pad="' + idx + '"]');
     if (!el) return;
+    const labelEl = el.querySelector('.pad-label');
     const sub = el.querySelector('.pad-sub');
     const ov = overrides[idx];
     if (ov) {
       el.classList.add('has-custom');
-      const name = getPadDisplayName(idx);
-      sub.textContent = name.length > 10 ? name.slice(0, 10) + '…' : name;
+      labelEl.textContent = getPadDisplayName(idx);
+      sub.textContent = PADS[idx].sub;
     } else {
       el.classList.remove('has-custom');
+      labelEl.textContent = PADS[idx].lbl;
       sub.textContent = PADS[idx].sub;
     }
   }
@@ -1265,6 +1296,8 @@
             ensureCtx();
             const src = ctx.createBufferSource();
             src.buffer = buf;
+            src.playbackRate.value = playbackRate;
+            src.detune.value = pitchSemitones * 100;
             src.connect(masterGain);
             src.start();
             const preview = { src, row };
@@ -1342,6 +1375,25 @@
     volValue.textContent = Math.round(v);
     ensureCtx();
     if (masterGain) masterGain.gain.value = v / 100;
+  });
+
+  // PITCH (-12..+12 semitones) and SPEED (0.5x..2x) — applied to sample/library buffers.
+  // Web Audio: detune (cents) and playbackRate are linked; both shift pitch+speed together.
+  // Default synths (kick/snare/bass etc.) ignore these — they're tone-locked by design.
+  let playbackRate = 1.0;
+  let pitchSemitones = 0;
+  const pitchSlider = document.getElementById('pitch');
+  const pitchValue = document.getElementById('pitch-value');
+  pitchSlider.addEventListener('input', (e) => {
+    pitchSemitones = parseInt(e.target.value, 10) || 0;
+    pitchValue.textContent = (pitchSemitones > 0 ? '+' : '') + pitchSemitones;
+  });
+  const speedSlider = document.getElementById('speed');
+  const speedValue = document.getElementById('speed-value');
+  speedSlider.addEventListener('input', (e) => {
+    const pct = parseInt(e.target.value, 10) || 100;
+    playbackRate = pct / 100;
+    speedValue.textContent = playbackRate.toFixed(1) + '×';
   });
 
   document.getElementById('file-input').addEventListener('change', async (e) => {
